@@ -3,11 +3,12 @@ from bs4 import BeautifulSoup
 import csv
 import os.path
 from soupsieve import select_one
+import time
 
 results = []
 
 
-def upload_wiki(keyword, column_name):  # ВИКИПЕДИЯ
+def upload_wiki(keyword, column_name):
     base_url = "https://en.m.wikipedia.org"
     html_1 = requests.get(base_url + "/wiki/" + keyword).text
     soup = BeautifulSoup(html_1, "html.parser")
@@ -25,7 +26,7 @@ def upload_wiki(keyword, column_name):  # ВИКИПЕДИЯ
     photo = requests.get(
         "https:" + link.attrs["href"], headers=headers).content
     with open(
-        "images/" + column_name + "/" + keyword + "." +
+        column_name + "/" + keyword + "." +
         link.attrs["href"][-3] +
         link.attrs["href"][-2] + link.attrs["href"][-1], "wb",
     ) as f:
@@ -37,13 +38,24 @@ def readCSV(csvfile_name, column_name):
         reader = csv.DictReader(File)
         for row in reader:
             results.append(row)
+
+    if not os.path.exists("images"):
+        os.makedirs("images")
+
     if column_name in results[0].keys():
         if not os.path.exists("images/" + column_name):
             os.chdir("images")
-            os.mkdir(column_name)
-            current_file_name = column_name
-        for i in results:
-            upload_wiki(i[column_name], column_name)
+            os.makedirs(column_name)
+
+            for i in results:
+                upload_wiki(i[column_name], column_name)
+    else:
+        if not os.path.exists("images/" + list(results[0].keys())[0]):
+            os.chdir("images")
+            os.makedirs(list(results[0].keys())[0])
+
+            for i in results:
+                upload_wiki(i[list(results[0].keys())[0]], list(results[0].keys())[0])
 
 
 def main():
