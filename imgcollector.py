@@ -42,6 +42,38 @@ def upload_wiki(key_word, column_name):
             f.write(photo)
     os.chdir("..")
 
+    time.sleep(2)
+
+
+def upload_britannica(key_word, column_name):
+    base_url = "https://www.britannica.com/search?query="
+    html = requests.get(base_url + key_word).text
+    soup = BeautifulSoup(html, "html.parser")
+    img = soup.select("img")
+    print(img)
+    img_src = img.attrs["src"]
+
+    time.sleep(2)
+
+    headers = {
+        "User-Agent": "Mozilla/5.0(Windows NT 10.0WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 YaBrowser/19.10.2.195 Yowser/2.5 Safari/537.36"
+    }
+    response = requests.get(
+        "https:" + img_src, headers=headers)
+    photo = response.content
+    
+    if not os.path.exists("images"):
+        file_dir = os.path.join('britannica.' + img_src.attrs["href"][-3] + img_src.attrs["href"][-2] + img_src.attrs["href"][-1])
+    else: file_dir = os.path.join(column_name, key_word,'britannica.' + img_src.attrs["href"][-3] + img_src.attrs["href"][-2] + img_src.attrs["href"][-1])
+
+    if response.status_code == 200:
+        with open(
+            file_dir, "wb",
+        ) as f:
+            f.write(photo)
+    os.chdir("..")
+
+    time.sleep(2)
 
 def readCSV(csvfile_name, column_name):
     with open(csvfile_name) as File:
@@ -51,21 +83,22 @@ def readCSV(csvfile_name, column_name):
 
     if column_name in results[0].keys():
         if not os.path.exists("images/" + column_name):
-            os.makedirs("images/"+column_name)
-        os.chdir("images/"+column_name)
+            os.makedirs("images/" + column_name)
+        os.chdir("images/" + column_name)
 
         for i in results:
             if not os.path.exists(i[column_name]):
                 os.makedirs(i[column_name])
                 os.chdir(i[column_name])   
                 upload_wiki(i[column_name], column_name)
+                upload_britannica(i[column_name], column_name) 
             
             elif os.path.exists(i[column_name]):
                 print(os.getcwd())  
-                if len(os.listdir(i[column_name]))<1:
+                if len(os.listdir(i[column_name]))<2:
                     os.chdir(i[column_name]) 
-                    upload_wiki(i[column_name], column_name)   
-            time.sleep(2)
+                    upload_wiki(i[column_name], column_name)  
+                    upload_britannica(i[column_name], column_name) 
 
     else:
         col_name = list(results[0].keys())[0]
@@ -80,13 +113,14 @@ def readCSV(csvfile_name, column_name):
                 os.makedirs(cell_name)
                 os.chdir(cell_name)   
                 upload_wiki(cell_name, col_name)
-            
+                upload_britannica(cell_name, col_name)
+
             elif os.path.exists(cell_name):
                 print(os.getcwd())  
                 if len(os.listdir(cell_name))<1:
                     os.chdir(cell_name) 
-                    upload_wiki(cell_name, col_name)   
-            time.sleep(2)
+                    upload_wiki(cell_name, col_name) 
+                    upload_britannica(cell_name, col_name)  
 
 
 def main():
