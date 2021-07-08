@@ -8,11 +8,13 @@ import time
 results = []
 
 
-def upload_wiki(keyword, column_name):
+def upload_wiki(key_word, column_name):
     base_url = "https://en.m.wikipedia.org"
-    html_1 = requests.get(base_url + "/wiki/" + keyword).text
+    html_1 = requests.get(base_url + "/wiki/" + key_word).text
     soup = BeautifulSoup(html_1, "html.parser")
     t = soup.select_one("a.image")
+
+    time.sleep(2)
 
     html_2 = requests.get(base_url + t.attrs["href"])
     soup = BeautifulSoup(html_2.text, features="lxml")
@@ -20,17 +22,25 @@ def upload_wiki(keyword, column_name):
     link = a.select_one("a")
     print(link.attrs["href"])
 
+    time.sleep(2)
+
     headers = {
         "User-Agent": "Mozilla/5.0(Windows NT 10.0WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 YaBrowser/19.10.2.195 Yowser/2.5 Safari/537.36"
     }
-    photo = requests.get(
-        "https:" + link.attrs["href"], headers=headers).content
-    with open(
-        column_name + "/" + keyword + "." +
-        link.attrs["href"][-3] +
-        link.attrs["href"][-2] + link.attrs["href"][-1], "wb",
-    ) as f:
-        f.write(photo)
+    response = requests.get(
+        "https:" + link.attrs["href"], headers=headers)
+    photo = response.content
+    
+    if not os.path.exists("images"):
+        file_dir = os.path.join('wiki.' + link.attrs["href"][-3] + link.attrs["href"][-2] + link.attrs["href"][-1])
+    else: file_dir = os.path.join(column_name, key_word,'wiki.' + link.attrs["href"][-3] + link.attrs["href"][-2] + link.attrs["href"][-1])
+
+    if response.status_code == 200:
+        with open(
+            file_dir, "wb",
+        ) as f:
+            f.write(photo)
+    os.chdir("..")
 
 
 def readCSV(csvfile_name, column_name):
@@ -39,23 +49,44 @@ def readCSV(csvfile_name, column_name):
         for row in reader:
             results.append(row)
 
-    if not os.path.exists("images"):
-        os.makedirs("images")
-
     if column_name in results[0].keys():
         if not os.path.exists("images/" + column_name):
-            os.chdir("images")
-            os.makedirs(column_name)
+            os.makedirs("images/"+column_name)
+        os.chdir("images/"+column_name)
 
-            for i in results:
+        for i in results:
+            if not os.path.exists(i[column_name]):
+                os.makedirs(i[column_name])
+                os.chdir(i[column_name])   
                 upload_wiki(i[column_name], column_name)
-    else:
-        if not os.path.exists("images/" + list(results[0].keys())[0]):
-            os.chdir("images")
-            os.makedirs(list(results[0].keys())[0])
+            
+            elif os.path.exists(i[column_name]):
+                print(os.getcwd())  
+                if len(os.listdir(i[column_name]))<1:
+                    os.chdir(i[column_name]) 
+                    upload_wiki(i[column_name], column_name)   
+            time.sleep(2)
 
-            for i in results:
-                upload_wiki(i[list(results[0].keys())[0]], list(results[0].keys())[0])
+    else:
+        col_name = list(results[0].keys())[0]
+
+        if not os.path.exists("images/" + col_name):
+            os.makedirs("images/" + col_name)
+        os.chdir("images/" + col_name)
+
+        for i in results:
+            cell_name = i[list(results[0].keys())[0]]
+            if not os.path.exists(cell_name):
+                os.makedirs(cell_name)
+                os.chdir(cell_name)   
+                upload_wiki(cell_name, col_name)
+            
+            elif os.path.exists(cell_name):
+                print(os.getcwd())  
+                if len(os.listdir(cell_name))<1:
+                    os.chdir(cell_name) 
+                    upload_wiki(cell_name, col_name)   
+            time.sleep(2)
 
 
 def main():
