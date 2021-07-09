@@ -5,7 +5,8 @@ import os.path
 from soupsieve import select_one
 import time
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+import argparse
+import asyncio
 
 results = []
 
@@ -85,7 +86,7 @@ def upload_britannica(key_word, column_name):
             file_dir, "wb",
         ) as f:
             f.write(photo)
-
+    browser.quit()
     time.sleep(2)
 
 
@@ -112,7 +113,7 @@ def upload_pexels(key_word, column_name):
             file_dir, "wb",
         ) as f:
             f.write(photo)
-
+    browser.quit()
     time.sleep(2)
 
 
@@ -140,37 +141,38 @@ def upload_ccsearch(key_word, column_name):
         ) as f:
             f.write(photo)
     os.chdir("..")
-
+    browser.quit()
     time.sleep(2)
 
 
-def readCSV(csvfile_name, column_name):
-    with open(csvfile_name) as File:
+def readCSV(csv_file_name, column_name):
+    with open(csv_file_name) as File:
         reader = csv.DictReader(File)
         for row in reader:
             results.append(row)
 
-    if column_name in results[0].keys():
-        if not os.path.exists("images/" + column_name):
-            os.makedirs("images/" + column_name)
-        os.chdir("images/" + column_name)
+    if column_name != "_void_":
+        if column_name in results[0].keys():
+            if not os.path.exists("images/" + column_name):
+                os.makedirs("images/" + column_name)
+            os.chdir("images/" + column_name)
 
-        for i in results:
-            if not os.path.exists(i[column_name]):
-                os.makedirs(i[column_name])
-                os.chdir(i[column_name])   
-                upload_wiki(i[column_name], column_name)
-                upload_britannica(i[column_name], column_name)
-                upload_pexels(i[column_name], column_name) 
-                upload_ccsearch(i[column_name], column_name)
-            elif os.path.exists(i[column_name]):
-                print(os.getcwd())  
-                if len(os.listdir(i[column_name]))<5:
-                    os.chdir(i[column_name]) 
-                    upload_wiki(i[column_name], column_name)  
+            for i in results:
+                if not os.path.exists(i[column_name]):
+                    os.makedirs(i[column_name])
+                    os.chdir(i[column_name])   
+                    upload_wiki(i[column_name], column_name)
                     upload_britannica(i[column_name], column_name)
-                    upload_pexels(i[column_name], column_name)
-                    upload_ccsearch(i[column_name], column_name)  
+                    upload_pexels(i[column_name], column_name) 
+                    upload_ccsearch(i[column_name], column_name)
+                elif os.path.exists(i[column_name]):
+                    print(os.getcwd())  
+                    if len(os.listdir(i[column_name]))<5:
+                        os.chdir(i[column_name]) 
+                        upload_wiki(i[column_name], column_name)  
+                        upload_britannica(i[column_name], column_name)
+                        upload_pexels(i[column_name], column_name)
+                        upload_ccsearch(i[column_name], column_name)  
 
     else:
         col_name = list(results[0].keys())[0]
@@ -200,7 +202,17 @@ def readCSV(csvfile_name, column_name):
 
 
 def main():
-    readCSV("animals.csv", "animal")
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('csv_name', help='the name of the csv file we want to read')
+
+    parser.add_argument('--column', help='the name of the column in csv file to take', default="_void_")
+
+    args = parser.parse_args()
+
+    if args.column == "_void_":
+        readCSV(args.csv_name, "_void_")
+    else: readCSV(args.csv_name, args.column)
 
 
 if __name__ == "__main__":
