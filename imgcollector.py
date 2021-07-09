@@ -10,10 +10,32 @@ import asyncio
 
 results = []
 
+def save_image(url, url_type, column_name, keyword):
+    headers = {
+        "User-Agent": "Mozilla/5.0(Windows NT 10.0WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 YaBrowser/19.10.2.195 Yowser/2.5 Safari/537.36"
+    }
+    response = requests.get(
+        url, headers=headers)
+    photo = response.content
+    
+    if not os.path.exists("images"):
+        if url_type == "wiki." or url_type== "britannica.":
+            file_dir = os.path.join(url_type + url[-3] + url[-2] + url[-1])
+        else: file_dir = os.path.join(url_type + "jpg")
+    else:
+        if url_type == "wiki." or url_type== "britannica.":
+            file_dir = os.path.join('images', column_name, keyword, url_type + url[-3] + url[-2] + url[-1])
+        else: file_dir = os.path.join('images', column_name, keyword, url_type + "jpg")
 
-def upload_wiki(key_word, column_name):
+    if response.status_code == 200:
+        with open(
+            file_dir, "wb",
+        ) as f:
+            f.write(photo)
+            
+def upload_wiki(keyword, column_name):
     base_url = "https://en.m.wikipedia.org"
-    html_1 = requests.get(base_url + "/wiki/" + key_word).text
+    html_1 = requests.get(base_url + "/wiki/" + keyword).text
     soup = BeautifulSoup(html_1, "html.parser")
     t = soup.select_one("a.image")
 
@@ -27,22 +49,7 @@ def upload_wiki(key_word, column_name):
 
     time.sleep(2)
 
-    headers = {
-        "User-Agent": "Mozilla/5.0(Windows NT 10.0WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 YaBrowser/19.10.2.195 Yowser/2.5 Safari/537.36"
-    }
-    response = requests.get(
-        "https:" + link.attrs["href"], headers=headers)
-    photo = response.content
-    
-    if not os.path.exists("images"):
-        file_dir = os.path.join('wiki.' + link.attrs["href"][-3] + link.attrs["href"][-2] + link.attrs["href"][-1])
-    else: file_dir = os.path.join(column_name, key_word,'wiki.' + link.attrs["href"][-3] + link.attrs["href"][-2] + link.attrs["href"][-1])
-
-    if response.status_code == 200:
-        with open(
-            file_dir, "wb",
-        ) as f:
-            f.write(photo)
+    save_image("https:" + link.attrs["href"], "wiki.", keyword, column_name)
 
     time.sleep(2)
 
@@ -63,83 +70,37 @@ def _get_browser():
     return browser
 
 
-def upload_britannica(key_word, column_name):
+def upload_britannica(keyword, column_name):
     base_url = "https://www.britannica.com/search?query="
     browser = _get_browser()
-    browser.get(base_url + key_word)
+    browser.get(base_url + keyword)
     img = browser.find_element_by_css_selector('.SearchFeature .grid.p-20 img')
 
     image_url = img.get_attribute('src')
-    headers = {
-        "User-Agent": "Mozilla/5.0(Windows NT 10.0WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 YaBrowser/19.10.2.195 Yowser/2.5 Safari/537.36"
-    }
-    response = requests.get(
-        image_url, headers=headers)
-    photo = response.content
-    
-    if not os.path.exists("images"):
-        file_dir = os.path.join('britannica.' + image_url[-3] + image_url[-2] + image_url[-1])
-    else: file_dir = os.path.join(column_name, key_word,'britannica.' + image_url[-3] + image_url[-2] + image_url[-1])
-
-    if response.status_code == 200:
-        with open(
-            file_dir, "wb",
-        ) as f:
-            f.write(photo)
-    browser.quit()
+    save_image(image_url, "britannica.", column_name, keyword)
     time.sleep(2)
 
 
-def upload_pexels(key_word, column_name):
+def upload_pexels(keyword, column_name):
     base_url = "https://www.pexels.com/ru-ru/search/"
     browser = _get_browser()
-    browser.get(base_url + key_word)
+    browser.get(base_url + keyword)
     img = browser.find_element_by_css_selector('img.photo-item__img:first-child')
 
     image_url = img.get_attribute('src')
-    headers = {
-        "User-Agent": "Mozilla/5.0(Windows NT 10.0WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 YaBrowser/19.10.2.195 Yowser/2.5 Safari/537.36"
-    }
-    response = requests.get(
-        image_url, headers=headers)
-    photo = response.content
-    
-    if not os.path.exists("images"):
-        file_dir = 'pexels.jpg'
-    else: file_dir = os.path.join(column_name, key_word,'pexels.jpg')
-
-    if response.status_code == 200:
-        with open(
-            file_dir, "wb",
-        ) as f:
-            f.write(photo)
+    save_image(image_url, "pexels.", column_name, keyword)
     browser.quit()
     time.sleep(2)
 
 
-def upload_ccsearch(key_word, column_name):
+def upload_ccsearch(keyword, column_name):
     base_url = "https://search.creativecommons.org/search?q="
     browser = _get_browser()
-    browser.get(base_url + key_word)
+    browser.get(base_url + keyword)
     img = browser.find_element_by_css_selector('img.search-grid_image:first-child')
 
     image_url = img.get_attribute('src')
-    headers = {
-        "User-Agent": "Mozilla/5.0(Windows NT 10.0WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 YaBrowser/19.10.2.195 Yowser/2.5 Safari/537.36"
-    }
-    response = requests.get(
-        image_url, headers=headers)
-    photo = response.content
-    
-    if not os.path.exists("images"):
-        file_dir = 'ccsearch.jpg'
-    else: file_dir = os.path.join(column_name, key_word,'ccsearch.jpg')
-
-    if response.status_code == 200:
-        with open(
-            file_dir, "wb",
-        ) as f:
-            f.write(photo)
+    save_image(image_url, "ccsearch.", column_name, keyword)
     os.chdir("..")
     browser.quit()
     time.sleep(2)
