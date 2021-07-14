@@ -2,19 +2,12 @@ import glob
 from time import sleep
 import csv
 import os.path
-from soupsieve import select_one
-import time
-import argparse
-import aiohttp
 import asyncio
 import glob
 from time import sleep
 import csv
 import os.path
-from soupsieve import select_one
-import time
 import argparse
-import aiohttp
 import asyncio
 from random import choice
 from aiostream import stream
@@ -72,11 +65,11 @@ async def upload_wiki(keywords, geckodriver_path):
             sleep(1)
             return get_image(image_url)
         except Exception as exc:
-            wiki_logger.debug("wiki exception: {}".format(exc))
+            wiki_logger.exception("wiki exception:/%s", exc)
             return None, None
 
     for keyword in keywords:
-        wiki_logger.debug("Starting to upload wiki/{}".format(keyword))
+        wiki_logger.debug("Starting to upload wiki/%s", keyword)
         # blocking example:
         # filename, content = fetch_keyword(keyword)
         filename, content = await loop.run_in_executor(
@@ -106,12 +99,12 @@ async def upload_britannica(keywords, geckodriver_path):
             filename = os.path.basename(parse.urlparse(image_url).path)
             return filename, content
         except Exception as exc:
-            britannica_logger.debug("britannica exception: {}".format(exc))
+            britannica_logger.exception("britannica exception:/%s", exc)
             return None, None
 
     loop = asyncio.get_running_loop()
     for keyword in keywords:
-        britannica_logger.debug("Starting to upload britannica/{}".format(keyword))
+        britannica_logger.debug("Starting to upload britannica/%s", keyword)
         # Blocking example for debugging:
         # filename, content = fetch_image_url(keyword)
         filename, content = await loop.run_in_executor(
@@ -138,12 +131,12 @@ async def upload_pexels(keywords, geckodriver_path):
             sleep(1)
             return get_image(image_url)
         except Exception as exc:
-            pexels_logger.debug("pexels exception: {}".format(exc))
+            pexels_logger.exception("pexels exception:/%s", exc)
             return None, None
 
     loop = asyncio.get_running_loop()
     for keyword in keywords:
-        pexels_logger.debug("Starting to upload pexels/{}".format(keyword))
+        pexels_logger.debug("Starting to upload pexels/%s", keyword)
         # blocking example:
         # filename, content = fetch_keyword(keyword)
         filename, content = await loop.run_in_executor(
@@ -170,12 +163,12 @@ async def upload_ccsearch(keywords, geckodriver_path):
             sleep(1)
             return get_image(image_url)
         except Exception as exc:
-            ccsearch_logger.debug("ccsearch exception - {}".format(exc))
+            ccsearch_logger.debug("ccsearch exception:/%s", exc)
             return None, None
 
     loop = asyncio.get_running_loop()
     for keyword in keywords:
-        ccsearch_logger.debug("Starting to upload ccsearch/{}".format(keyword))
+        ccsearch_logger.debug("Starting to upload ccsearch/%s", keyword)
         # blocking example for debugging:
         # filename, content = fetch_keyword(keyword)
         filename, content = await loop.run_in_executor(
@@ -191,19 +184,19 @@ async def read_csv(csv_file_name, column_name=None, geckodriver_path=None):
     if geckodriver_path is None:
         geckodriver_path = shutil.which('geckodriver')
     if not os.path.exists("images"):
-        os.makedirs("images")
+        os.mkdir("images")
     rows = []
     sources = {
         "britannica": set(),
         "wiki": set(),
         "pexels": set(),
         "ccsearch": set()}
-    with open(csv_file_name) as File:
-        reader = csv.DictReader(File)
+    with open(csv_file_name) as f:
+        reader = csv.DictReader(f)
         all_columns = reader.fieldnames
         if column_name and column_name not in all_columns:
             raise ValueError(
-                "Unknown column name. Excected one from {} got {} instead.".format(
+                "Unknown column name. Expected one from {} got {} instead.".format(
                     all_columns, column_name))
         column_name = column_name or all_columns[0]
         for row in reader:
